@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Word Roots Highlighter</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --fg: #1f2328; --muted: #6b7280; --card: #ffffff; --line: #e3e0d8;
+    --germanic: #2f6fd0; --norse: #14948a; --latin: #d2453f; --greek: #8a54d6;
+    --celtic: #3f9a4a; --other: #d58a12; --unknown: #8a8f98;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a; --fg: #e8e6e1; --muted: #9aa0aa; --card: #1c1f25; --line: #2d3138;
+      --germanic: #5b9bff; --norse: #3fd0c2; --latin: #ff7a73; --greek: #b98bff;
+      --celtic: #6ed07b; --other: #f0aa3a; --unknown: #8a8f98;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  textarea { width: 100%; min-height: 150px; padding: 12px; font: inherit; color: inherit; background: var(--card);
+    border: 1px solid var(--line); border-radius: 8px; resize: vertical; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; margin: 12px 0; font-size: .9rem; }
+  .row label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+  button { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--card);
+    color: inherit; cursor: pointer; }
+  #status { color: var(--muted); }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--card); font-size: .85rem; user-select: none; }
+  .chip .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+  .chip[aria-pressed="true"] { outline: 2px solid var(--c); }
+  .chip small { color: var(--muted); }
+  .bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--line); margin-bottom: 20px; }
+  .bar span { background: var(--c); transition: width .25s; }
+  #out { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px; white-space: pre-wrap;
+    font-size: 1.1rem; line-height: 1.9; min-height: 80px; overflow-wrap: anywhere; }
+  .w { border-radius: 4px; padding: 1px 2px; background: color-mix(in srgb, var(--c) 26%, transparent);
+    box-shadow: inset 0 -2px 0 var(--c); }
+  .w.guess { box-shadow: inset 0 -2px 0 transparent; background: color-mix(in srgb, var(--c) 14%, transparent);
+    outline: 1px dashed color-mix(in srgb, var(--c) 60%, transparent); outline-offset: -1px; }
+  .w.dim { background: none; box-shadow: none; outline: none; opacity: .4; }
+  .germanic { --c: var(--germanic); } .norse { --c: var(--norse); } .latin { --c: var(--latin); }
+  .greek { --c: var(--greek); } .celtic { --c: var(--celtic); } .other { --c: var(--other); } .unknown { --c: var(--unknown); }
+  footer { color: var(--muted); font-size: .85rem; margin-top: 24px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Word Roots Highlighter</h1>
+  <p class="sub">Paste English text and see which words come from Germanic, Latin, Norse, Greek and other roots.</p>
+
+  <textarea id="in" aria-label="Text to analyze" spellcheck="false"></textarea>
+  <div class="row">
+    <label><input type="checkbox" id="online"> Look up unknown words on Wiktionary</label>
+    <label><input type="checkbox" id="unique"> Count unique words only</label>
+    <label><input type="checkbox" id="merge"> Treat Norse as Germanic</label>
+    <button id="sample">Load sample</button>
+    <span id="status"></span>
+  </div>
+
+  <div class="legend" id="legend"></div>
+  <div class="bar" id="bar"></div>
+  <div id="out" aria-live="polite"></div>
+
+  <footer>
+    Solid underline = known word. Dashed outline = a guess from spelling patterns (turn on the Wiktionary lookup to check these).
+    Words are filed by the language family they entered English from: Latin includes French, Italian and Spanish,
+    and old Latin loans like <i>street</i> count as Latin. Click a legend chip to spotlight one origin; hover a word for details.
+  </footer>
+</main>
+
+<script src="lexicon.js"></script>
+<script src="classify.js"></script>
+<script>
+const SAMPLE = `Amazing grace, how sweet the sound
+That saved a wretch like me
+I once was lost, but now am found
+Was blind, but now I see`;
+
+const WORD_RE = /[A-Za-zÀ-ɏ]+(?:['’][A-Za-z]+)*/g;
+const CACHE_KEY = "glh-wikt-v1";
+const MAX_LOOKUPS = 200;
+
+const $ = (id) => document.getElementById(id);
+const els = { in: $("in"), out: $("out"), legend: $("legend"), bar: $("bar"), status: $("status"),
+  online: $("online"), unique: $("unique"), merge: $("merge") };
+const eff = (cat) => (els.merge.checked && cat === "norse" ? "germanic" : cat);
+
+const state = { tokens: [], solo: new Set(), lookupRun: 0 };
+let wikt = {};
+try { wikt = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}"); } catch {}
+const saveCache = () => { try { localStorage.setItem(CACHE_KEY, JSON.stringify(wikt)); } catch {} };
+
+function analyze() {
+  const text = els.in.value;
+  state.tokens = [];
+  const frag = document.createDocumentFragment();
+  let last = 0;
+  for (const m of text.matchAll(WORD_RE)) {
+    if (m.index > last) frag.append(text.slice(last, m.index));
+    const word = m[0];
+    const key = word.toLowerCase().replace(/’/g, "'");
+    let res = classify(word, LEXICON);
+    if (res.src !== "lexicon" && res.src !== "stem" && wikt[key]) {
+      res = wikt[key] === "?" ? res : { cat: wikt[key], src: "wiktionary", guess: false, note: "from Wiktionary" };
+    }
+    const span = document.createElement("span");
+    span.textContent = word;
+    state.tokens.push({ key, span, res });
+    paint(state.tokens.at(-1));
+    frag.append(span);
+    last = m.index + word.length;
+  }
+  if (last < text.length) frag.append(text.slice(last));
+  els.out.replaceChildren(frag);
+  renderStats();
+  if (els.online.checked) lookupUnknowns();
+}
+
+function paint(t) {
+  const { res, span } = t;
+  const cat = eff(res.cat);
+  span.className = `w ${cat}${res.guess ? " guess" : ""}${state.solo.size && !state.solo.has(cat) ? " dim" : ""}`;
+  const label = CATEGORIES[res.cat].label;
+  const how = { lexicon: "known", stem: "known " + res.note, rule: "guess: " + res.note, wiktionary: "Wiktionary", none: "no data" }[res.src];
+  span.title = `${label} (${how})`;
+}
+
+function renderStats() {
+  const counts = Object.fromEntries(Object.keys(CATEGORIES).map((c) => [c, 0]));
+  const seen = new Set();
+  for (const t of state.tokens) {
+    if (els.unique.checked) { if (seen.has(t.key)) continue; seen.add(t.key); }
+    counts[eff(t.res.cat)]++;
+  }
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  els.legend.replaceChildren(...Object.entries(CATEGORIES).filter(([cat]) => counts[cat] !== undefined && !(els.merge.checked && cat === "norse")).map(([cat, info]) => {
+    const chip = document.createElement("button");
+    chip.className = `chip ${cat}`;
+    chip.setAttribute("aria-pressed", state.solo.has(cat));
+    const pct = total ? Math.round((counts[cat] / total) * 100) : 0;
+    chip.innerHTML = `<span class="dot"></span>${info.short} <small>${counts[cat]} · ${pct}%</small>`;
+    chip.onclick = () => { state.solo.has(cat) ? state.solo.delete(cat) : state.solo.add(cat); state.tokens.forEach(paint); renderStats(); };
+    return chip;
+  }));
+  els.bar.replaceChildren(...Object.keys(CATEGORIES).filter((c) => counts[c]).map((cat) => {
+    const s = document.createElement("span");
+    s.className = cat;
+    s.style.width = (counts[cat] / total) * 100 + "%";
+    s.title = `${CATEGORIES[cat].label}: ${counts[cat]}`;
+    return s;
+  }));
+}
+
+// ---------- Wiktionary lookup ----------
+const SKIP_LANGS = new Set(["enm", "ine-pro", "ine", "und", "mul"]);
+
+function categoryFromWikitext(wikitext) {
+  const en = wikitext.split(/^==\s*English\s*==\s*$/m)[1];
+  if (!en) return { none: true };
+  const body = en.split(/^==[^=]/m)[0];
+  const ety = body.match(/^===+\s*Etymology[^=]*===+\s*$([\s\S]*?)(?=^===|$(?![\s\S]))/m);
+  const text = ety ? ety[1] : "";
+  const re = /\{\{(?:inh|der|bor|lbor|ubor|calque|cal|clq|inh\+|der\+|bor\+)\|en\|([\w.-]+)|\{\{etyl\|([\w.-]+)\|en/g;
+  for (const m of text.matchAll(re)) {
+    const code = m[1] || m[2];
+    if (!SKIP_LANGS.has(code)) return { cat: langToCategory(code) };
+  }
+  const lemma = body.match(/\{\{(?:[\w -]+ of|inflection of|infl of)\|en\|([^|}=]+)/);
+  if (lemma) return { lemma: lemma[1] };
+  return { none: true };
+}
+
+async function wiktCategory(word, depth = 0) {
+  const url = `https://en.wiktionary.org/w/api.php?action=parse&page=${encodeURIComponent(word)}&prop=wikitext&redirects=1&format=json&origin=*`;
+  const r = await fetch(url);
+  const j = await r.json();
+  if (j.error) return null;
+  const res = categoryFromWikitext(j.parse.wikitext["*"]);
+  if (res.cat) return res.cat;
+  if (res.lemma && depth < 2 && res.lemma !== word) return wiktCategory(res.lemma, depth + 1);
+  return null;
+}
+
+async function lookupUnknowns() {
+  const run = ++state.lookupRun;
+  const todo = [...new Set(state.tokens.filter((t) => t.res.src === "rule" || t.res.src === "none").map((t) => t.key))]
+    .filter((k) => !(k in wikt)).slice(0, MAX_LOOKUPS);
+  if (!todo.length) { els.status.textContent = ""; return; }
+  let done = 0;
+  const worker = async () => {
+    while (todo.length && run === state.lookupRun) {
+      const key = todo.shift();
+      try {
+        const base = key.replace(/n't$|'(s|re|ve|ll|d|m)$/, "");
+        wikt[key] = (await wiktCategory(base)) || "?";
+      } catch { /* network error: leave uncached, retry next time */ }
+      els.status.textContent = `Looking up words… ${++done}`;
+      for (const t of state.tokens) if (t.key === key && wikt[key] && wikt[key] !== "?") {
+        t.res = { cat: wikt[key], src: "wiktionary", guess: false, note: "" };
+        paint(t);
+      }
+    }
+  };
+  await Promise.all([worker(), worker(), worker(), worker()]);
+  if (run !== state.lookupRun) return;
+  saveCache();
+  renderStats();
+  els.status.textContent = "Lookup done.";
+}
+
+let timer;
+els.in.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(analyze, 150); });
+els.online.addEventListener("change", analyze);
+els.unique.addEventListener("change", renderStats);
+els.merge.addEventListener("change", () => { state.solo.delete("norse"); state.tokens.forEach(paint); renderStats(); });
+$("sample").onclick = () => { els.in.value = SAMPLE; analyze(); };
+els.in.value = SAMPLE;
+analyze();
+</script>
+</body>
+</html>
