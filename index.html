@@ -68,9 +68,13 @@
   <div id="out" aria-live="polite"></div>
 
   <footer>
-    Solid underline = known word. Dashed outline = a guess from spelling patterns (turn on the Wiktionary lookup to check these).
-    Words are filed by the language family they entered English from: Latin includes French, Italian and Spanish,
-    and old Latin loans like <i>street</i> count as Latin. Click a legend chip to spotlight one origin; hover a word for details.
+    Solid underline = recorded origin. Dashed outline = an inference or an unresolved origin.
+    Words follow their historical roots through intermediary languages: <i>philosophy</i> counts as Greek,
+    <i>street</i> as Latin, and Scots belongs to Germanic. Mixed formations and words with different origins for
+    different meanings appear as Unresolved; hover for details.
+    Lexical data: <a href="https://kaikki.org/dictionary/English/index.html">Wiktionary contributors via Kaikki</a>,
+    <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+    Click a legend chip to spotlight one origin.
   </footer>
 </main>
 
@@ -82,8 +86,7 @@ That saved a wretch like me
 I once was lost, but now am found
 Was blind, but now I see`;
 
-const WORD_RE = /[A-Za-zÀ-ɏ]+(?:['’][A-Za-z]+)*/g;
-const CACHE_KEY = "glh-wikt-v1";
+const CACHE_KEY = "glh-wikt-roots-v2";
 const MAX_LOOKUPS = 200;
 
 const $ = (id) => document.getElementById(id);
@@ -104,9 +107,9 @@ function analyze() {
   for (const m of text.matchAll(WORD_RE)) {
     if (m.index > last) frag.append(text.slice(last, m.index));
     const word = m[0];
-    const key = word.toLowerCase().replace(/’/g, "'");
+    const key = normalizeWord(word);
     let res = classify(word, LEXICON);
-    if (res.src !== "lexicon" && res.src !== "stem" && wikt[key]) {
+    if (res.guess && res.src !== "lexicon" && !res.origins && wikt[key]) {
       res = wikt[key] === "?" ? res : { cat: wikt[key], src: "wiktionary", guess: false, note: "from Wiktionary" };
     }
     const span = document.createElement("span");
@@ -127,7 +130,8 @@ function paint(t) {
   const cat = eff(res.cat);
   span.className = `w ${cat}${res.guess ? " guess" : ""}${state.solo.size && !state.solo.has(cat) ? " dim" : ""}`;
   const label = CATEGORIES[res.cat].label;
-  const how = { lexicon: "known", stem: "known " + res.note, rule: "guess: " + res.note, wiktionary: "Wiktionary", none: "no data" }[res.src];
+  const how = { lexicon: "recorded" + (res.note ? ": " + res.note : ""), stem: res.note,
+    rule: "guess: " + res.note, wiktionary: "Wiktionary", none: "no data" }[res.src];
   span.title = `${label} (${how})`;
 }
 
@@ -158,19 +162,24 @@ function renderStats() {
 }
 
 // ---------- Wiktionary lookup ----------
-const SKIP_LANGS = new Set(["enm", "ine-pro", "ine", "und", "mul"]);
+const SKIP_LANGS = new Set(["en", "enm", "ine-pro", "ine", "und", "mul"]);
 
 function categoryFromWikitext(wikitext) {
   const en = wikitext.split(/^==\s*English\s*==\s*$/m)[1];
   if (!en) return { none: true };
   const body = en.split(/^==[^=]/m)[0];
-  const ety = body.match(/^===+\s*Etymology[^=]*===+\s*$([\s\S]*?)(?=^===|$(?![\s\S]))/m);
-  const text = ety ? ety[1] : "";
-  const re = /\{\{(?:inh|der|bor|lbor|ubor|calque|cal|clq|inh\+|der\+|bor\+)\|en\|([\w.-]+)|\{\{etyl\|([\w.-]+)\|en/g;
-  for (const m of text.matchAll(re)) {
-    const code = m[1] || m[2];
-    if (!SKIP_LANGS.has(code)) return { cat: langToCategory(code) };
+  const re = /\{\{(?:inh|der|bor|lbor|ubor|inh\+|der\+|bor\+)\|en\|([\w.-]+)|\{\{etyl\|([\w.-]+)\|en/g;
+  const categories = new Set();
+  for (const ety of body.matchAll(/^===+\s*Etymology[^=]*===+\s*$([\s\S]*?)(?=^===|$(?![\s\S]))/gm)) {
+    let category = null;
+    for (const m of ety[1].matchAll(re)) {
+      const code = m[1] || m[2];
+      if (!SKIP_LANGS.has(code) && !code.endsWith("-pro")) category = langToCategory(code) || category;
+    }
+    if (category) categories.add(category);
   }
+  if (categories.size === 1) return { cat: [...categories][0] };
+  if (categories.size > 1) return { none: true };
   const lemma = body.match(/\{\{(?:[\w -]+ of|inflection of|infl of)\|en\|([^|}=]+)/);
   if (lemma) return { lemma: lemma[1] };
   return { none: true };
@@ -189,7 +198,7 @@ async function wiktCategory(word, depth = 0) {
 
 async function lookupUnknowns() {
   const run = ++state.lookupRun;
-  const todo = [...new Set(state.tokens.filter((t) => t.res.src === "rule" || t.res.src === "none").map((t) => t.key))]
+  const todo = [...new Set(state.tokens.filter((t) => t.res.guess && t.res.src !== "lexicon" && !t.res.origins).map((t) => t.key))]
     .filter((k) => !(k in wikt)).slice(0, MAX_LOOKUPS);
   if (!todo.length) { els.status.textContent = ""; return; }
   let done = 0;

@@ -1,0 +1,130 @@
+{
+  "description": "Reviewed core vocabulary and explicit exceptions. Categories follow the historical-root policy in LEXICON.md. Overrides list possible families when spelling alone cannot choose an etymology. Source links identify the relevant English etymologies, not cognates.",
+  "categories": {
+    "germanic": "a about above after again against ain't all along also always am among amongst an and answer any anybody anyone are at backup be been before behind being belief believe below beside between beware beyond blackout bluff bonfire boredom breakup brethren brother but by came can cannae child children cleanup comeback could dawn did didnae dinnae do does doing done down dreadful drown drowned during each english ever evil far feet few flood foot for forever freedom friday friend friends frighten from frozen gateway geek geese getaway given goes goose had handicap has hatred have having he her here hers herself him himself his hopeful hopeless household housekeeper how hunger hungry i if in into is isnae it its itself kingdom knockout knowledge lady laid leftover likewise list lookout lookup lowly madman main makeover makeup man may me meaningful meaningless men mice middle might mine monday more most mouse murder must my myself neanderthal near never nevertheless nickname nightmare no nobody nor not now numb of off often on only onto or other ought our ours ourselves out over own ox oxen peek playoff queen ran runaway sail sat seen setback settle setup shall she shield should silver so some someday soon stakeout standby steel still such sunday takeoff teeth than that themselves then there therefore these this those through thursday to too tooth toward towards truth tuesday under until up upon uptight uptown us was wasnae watchman we wednesday went were what whatever whatsoever when where which while who whom whose why wife wilderness will with within without wives woman women workout worldwide would yes yet you your yours yourself yourselves",
+    "norse": "anger clumsy died dying egg gaze get got gotten husband kid knife law leg nag skill skirt sky take taken their theirs them they took ugly weak window wrong",
+    "latin": "abbey amenities april astonish astonishing bankrupt bankruptcy because bon candle casket cheese clearly color colour considerate cup cupid december demolish difficult disclosure duty factory february flour graceful humbly ignorance imminent incident inhabitant insurance italic january juicy july june kitchen language latin legislature leo lucifer mafia memorize mile narrate nation notre november obvious obviously october ordinance oriental past peaceful peacefully people pilgrimage pinch pitiful pointless poisonous porridge posse powerful presence print question receipt ref regulatory revenue saturday saturn science semi september street suggest suicide template terribly text tornado tremendous uncertain unit vatican verde verse very vitamin wine",
+    "greek": "alphabet alphabetical analytical atom attic ballistics biology butter christ church clone electro geography geological gym halo historical kilo mime music philosophy poetry polyphonic porno protein psychology rhythm telephone theater theatre theatrical titan titans vial zoo",
+    "celtic": "whisky whiskey glen loch slogan shamrock banshee leprechaun druid ceilidh coracle corgi tory",
+    "other": "coffee sugar cotton tea chocolate tomato potato banana canoe hammock barbecue hurricane yoga shampoo bungalow jungle guru karma ketchup tycoon tsunami kimono karaoke vodka robot kayak igloo moose raccoon skunk pecan hickory sabbath cashmere"
+  },
+  "overrides": {
+    "bank": {
+      "categories": [
+        "germanic"
+      ],
+      "note": "The separate financial, bench, and embankment etymologies converge on Germanic roots; the financial sense passed through Romance languages.",
+      "source": "https://en.wiktionary.org/wiki/bank#English"
+    },
+    "bark": {
+      "categories": [
+        "germanic",
+        "norse",
+        "other"
+      ],
+      "note": "The dog sound is Germanic, tree covering Norse, and the vessel name ultimately Egyptian through Greek and Romance.",
+      "source": "https://en.wiktionary.org/wiki/bark#English"
+    },
+    "ear": {
+      "categories": [
+        "germanic"
+      ],
+      "note": "Both the hearing organ and a head of grain have Germanic roots.",
+      "source": "https://en.wiktionary.org/wiki/ear#English"
+    },
+    "lie": {
+      "categories": [
+        "germanic"
+      ],
+      "note": "Both reclining and telling an untruth are inherited Germanic words.",
+      "source": "https://en.wiktionary.org/wiki/lie#English"
+    },
+    "rose": {
+      "categories": [
+        "germanic",
+        "latin"
+      ],
+      "note": "The flower is a Latin loan; the past tense of rise is Germanic.",
+      "source": "https://en.wiktionary.org/wiki/rose#English"
+    },
+    "spring": {
+      "categories": [
+        "germanic"
+      ],
+      "note": "The season, water source, and verb spring are Germanic.",
+      "source": "https://en.wiktionary.org/wiki/spring#English"
+    },
+    "school": {
+      "categories": [
+        "germanic",
+        "greek"
+      ],
+      "note": "An educational school ultimately has Greek roots; a school of fish comes through Dutch.",
+      "source": "https://en.wiktionary.org/wiki/school#English"
+    },
+    "tattoo": {
+      "categories": [
+        "germanic",
+        "other"
+      ],
+      "note": "Body marking comes from Polynesian; the military signal comes from Dutch.",
+      "source": "https://en.wiktionary.org/wiki/tattoo#English"
+    },
+    "television": {
+      "categories": [
+        "greek",
+        "latin"
+      ],
+      "note": "A mixed formation combining Greek tele- with Latin-derived vision.",
+      "source": "https://en.wiktionary.org/wiki/television#English"
+    },
+    "die": {
+      "categories": [
+        "germanic",
+        "norse",
+        "latin"
+      ],
+      "note": "Ceasing to live is Norse, the gaming/manufacturing noun Latin, and the obsolete spelling of dye Germanic.",
+      "source": "https://en.wiktionary.org/wiki/die#English"
+    },
+    "pound": {
+      "categories": [
+        "germanic",
+        "latin"
+      ],
+      "note": "The unit of weight is a Latin loan; striking and an enclosure are Germanic.",
+      "source": "https://en.wiktionary.org/wiki/pound#English"
+    },
+    "inch": {
+      "categories": [
+        "celtic",
+        "latin"
+      ],
+      "note": "The measurement is a Latin loan; the Scots word for an island has Celtic roots.",
+      "source": "https://en.wiktionary.org/wiki/inch#English"
+    },
+    "furniture": {
+      "categories": [
+        "germanic"
+      ],
+      "note": "Middle French fourniture derives from fournir, whose lexical root is Frankish; compare furnish.",
+      "source": "https://en.wiktionary.org/wiki/furniture#English",
+      "additional_source": "https://en.wiktionary.org/wiki/fournir#French"
+    },
+    "trust": {
+      "categories": [
+        "germanic"
+      ],
+      "note": "The current Wiktionary analysis favors a native Old English reflex; the traditional Old Norse derivation has a vowel-history problem.",
+      "source": "https://en.wiktionary.org/wiki/trust#English"
+    },
+    "wanna": {
+      "categories": [
+        "germanic",
+        "norse"
+      ],
+      "note": "A contraction of want (Norse roots) and to (native English).",
+      "source": "https://en.wiktionary.org/wiki/wanna#English"
+    }
+  }
+}

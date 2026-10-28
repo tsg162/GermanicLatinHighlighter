@@ -1,0 +1,63 @@
+{
+  "benchmark_sha256": "9c965d384526facc59260e94f8ccff1582633fa385004abe1455ed457062acbc",
+  "current_entries": 615012,
+  "coverage": {
+    "100": {
+      "current": {
+        "words": 100,
+        "recorded_single_family": 91,
+        "recorded_multiple_families": 6,
+        "inferred_stem": 0,
+        "spelling_guess": 3,
+        "no_result": 0
+      },
+      "baseline": {
+        "words": 100,
+        "recorded_single_family": 85,
+        "recorded_multiple_families": 0,
+        "inferred_stem": 2,
+        "spelling_guess": 12,
+        "no_result": 1
+      }
+    },
+    "1000": {
+      "current": {
+        "words": 1000,
+        "recorded_single_family": 816,
+        "recorded_multiple_families": 122,
+        "inferred_stem": 1,
+        "spelling_guess": 45,
+        "no_result": 16
+      },
+      "baseline": {
+        "words": 1000,
+        "recorded_single_family": 486,
+        "recorded_multiple_families": 0,
+        "inferred_stem": 112,
+        "spelling_guess": 316,
+        "no_result": 86
+      }
+    },
+    "10000": {
+      "current": {
+        "words": 10000,
+        "recorded_single_family": 7303,
+        "recorded_multiple_families": 1116,
+        "inferred_stem": 43,
+        "spelling_guess": 897,
+        "no_result": 641
+      },
+      "baseline": {
+        "words": 10000,
+        "recorded_single_family": 1583,
+        "recorded_multiple_families": 0,
+        "inferred_stem": 1505,
+        "spelling_guess": 4567,
+        "no_result": 2345
+      }
+    }
+  },
+  "benchmark_source": "https://github.com/first20hours/google-10000-english",
+  "baseline_entries": 2081,
+  "note": "Exact spelling coverage, including unresolved multi-family entries. This benchmark includes proper names and abbreviations; coverage is not etymological accuracy."
+}
