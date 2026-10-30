@@ -28,6 +28,12 @@
   .row label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
   button { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--card);
     color: inherit; cursor: pointer; }
+  .saved { margin: 0 0 12px; font-size: .9rem; }
+  .saved .items { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .item { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; background: var(--card); overflow: hidden; }
+  .item button { border: 0; border-radius: 0; background: none; }
+  .item .del { color: var(--muted); padding-left: 6px; padding-right: 8px; }
+  .item.active { outline: 2px solid var(--germanic); }
   #status { color: var(--muted); }
   .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 8px; }
   .chip { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 999px; cursor: pointer;
@@ -63,6 +69,12 @@
     <span id="status"></span>
   </div>
 
+  <div class="saved">
+    <button id="save">Save as…</button>
+    <span id="current"></span>
+    <div class="items" id="items"></div>
+  </div>
+
   <div class="legend" id="legend"></div>
   <div class="bar" id="bar"></div>
   <div id="out" aria-live="polite"></div>
@@ -91,7 +103,7 @@ const MAX_LOOKUPS = 200;
 
 const $ = (id) => document.getElementById(id);
 const els = { in: $("in"), out: $("out"), legend: $("legend"), bar: $("bar"), status: $("status"),
-  online: $("online"), unique: $("unique"), merge: $("merge") };
+  save: $("save"), current: $("current"), items: $("items"), online: $("online"), unique: $("unique"), merge: $("merge") };
 const eff = (cat) => (els.merge.checked && cat === "norse" ? "germanic" : cat);
 
 const state = { tokens: [], solo: new Set(), lookupRun: 0 };
@@ -223,14 +235,82 @@ async function lookupUnknowns() {
   els.status.textContent = "Lookup done.";
 }
 
+// ---------- Saved texts ----------
+const SAVED_KEY = "glh-saved-texts-v1";
+const PARAM = "text";
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(SAVED_KEY) || "{}"); } catch {}
+const persist = () => { try { localStorage.setItem(SAVED_KEY, JSON.stringify(saved)); } catch { alert("Could not save: browser storage is unavailable."); } };
+let currentName = null;
+
+function setUrl(name, push) {
+  const url = new URL(location.href);
+  name === null ? url.searchParams.delete(PARAM) : url.searchParams.set(PARAM, name);
+  history[push ? "pushState" : "replaceState"](null, "", url);
+}
+
+function renderSaved() {
+  els.current.textContent = currentName ? `Editing: ${currentName}` : "";
+  els.items.replaceChildren(...Object.keys(saved).sort((a, b) => a.localeCompare(b)).map((name) => {
+    const box = document.createElement("span");
+    box.className = "item" + (name === currentName ? " active" : "");
+    const open = document.createElement("button");
+    open.textContent = name;
+    open.onclick = () => openSaved(name, true);
+    const del = document.createElement("button");
+    del.className = "del";
+    del.textContent = "×";
+    del.title = `Delete "${name}"`;
+    del.setAttribute("aria-label", `Delete ${name}`);
+    del.onclick = () => {
+      if (!confirm(`Delete "${name}"?`)) return;
+      delete saved[name];
+      persist();
+      if (name === currentName) { currentName = null; setUrl(null, false); }
+      renderSaved();
+    };
+    box.append(open, del);
+    return box;
+  }));
+}
+
+function openSaved(name, push) {
+  if (name === null || !Object.hasOwn(saved, name)) return false;
+  currentName = name;
+  els.in.value = saved[name];
+  setUrl(name, push && name !== new URLSearchParams(location.search).get(PARAM));
+  analyze();
+  renderSaved();
+  return true;
+}
+
+els.save.onclick = () => {
+  const name = (prompt("Name for this text:", currentName || "") || "").trim();
+  if (!name) return;
+  if (Object.hasOwn(saved, name) && name !== currentName && !confirm(`"${name}" already exists. Overwrite?`)) return;
+  saved[name] = els.in.value;
+  persist();
+  currentName = name;
+  setUrl(name, name !== new URLSearchParams(location.search).get(PARAM));
+  renderSaved();
+};
+
+window.addEventListener("popstate", () => {
+  const name = new URLSearchParams(location.search).get(PARAM);
+  if (!(name !== null && openSaved(name, false))) { currentName = null; renderSaved(); }
+});
+
 let timer;
 els.in.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(analyze, 150); });
 els.online.addEventListener("change", analyze);
 els.unique.addEventListener("change", renderStats);
 els.merge.addEventListener("change", () => { state.solo.delete("norse"); state.tokens.forEach(paint); renderStats(); });
 $("sample").onclick = () => { els.in.value = SAMPLE; analyze(); };
-els.in.value = SAMPLE;
-analyze();
+if (!openSaved(new URLSearchParams(location.search).get(PARAM), false)) {
+  els.in.value = SAMPLE;
+  analyze();
+  renderSaved();
+}
 </script>
 </body>
 </html>
