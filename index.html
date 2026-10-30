@@ -3,92 +3,225 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Word Roots Highlighter</title>
+<title>WordsByOrigin.com — See where your words come from</title>
+<meta name="description" content="Paste any English text and see which words come from Germanic, Latin, Norse, Greek and other roots.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232f6fd0'/%3E%3Cpath d='M7 10l4 12 5-9 5 9 4-12' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
   :root {
-    --bg: #fbfaf7; --fg: #1f2328; --muted: #6b7280; --card: #ffffff; --line: #e3e0d8;
+    color-scheme: light dark;
+    --bg: #f6f4ee; --bg2: #efece3; --fg: #1d2126; --muted: #667080; --card: #ffffff; --line: #e1ddd1;
+    --accent: #2f6fd0; --accent-fg: #fff; --danger: #c93a34;
+    --shadow: 0 1px 2px rgb(30 25 10 / .05), 0 8px 24px rgb(30 25 10 / .06);
     --germanic: #2f6fd0; --norse: #14948a; --latin: #d2453f; --greek: #8a54d6;
     --celtic: #3f9a4a; --other: #d58a12; --unknown: #8a8f98;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #14161a; --fg: #e8e6e1; --muted: #9aa0aa; --card: #1c1f25; --line: #2d3138;
+      --bg: #101216; --bg2: #14171c; --fg: #e9e7e2; --muted: #98a0ac; --card: #1a1d23; --line: #2b2f37;
+      --accent: #5b9bff; --accent-fg: #07101f; --danger: #ff7a73;
+      --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .35);
       --germanic: #5b9bff; --norse: #3fd0c2; --latin: #ff7a73; --greek: #b98bff;
       --celtic: #6ed07b; --other: #f0aa3a; --unknown: #8a8f98;
     }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
-  main { max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; }
-  h1 { font-size: 1.5rem; margin: 0 0 4px; }
-  .sub { color: var(--muted); margin: 0 0 20px; }
-  textarea { width: 100%; min-height: 150px; padding: 12px; font: inherit; color: inherit; background: var(--card);
-    border: 1px solid var(--line); border-radius: 8px; resize: vertical; }
-  .row { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; margin: 12px 0; font-size: .9rem; }
-  .row label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
-  button { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--card);
-    color: inherit; cursor: pointer; }
-  .saved { margin: 0 0 12px; font-size: .9rem; }
-  .saved .items { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .item { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; background: var(--card); overflow: hidden; }
-  .item button { border: 0; border-radius: 0; background: none; }
-  .item .del { color: var(--muted); padding-left: 6px; padding-right: 8px; }
-  .item.active { outline: 2px solid var(--germanic); }
-  #status { color: var(--muted); }
-  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 8px; }
-  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 999px; cursor: pointer;
-    border: 1px solid var(--line); background: var(--card); font-size: .85rem; user-select: none; }
+  [hidden] { display: none !important; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; color: var(--fg); font: 16px/1.55 var(--sans); -webkit-font-smoothing: antialiased;
+    background: radial-gradient(1200px 500px at 50% -200px, color-mix(in srgb, var(--accent) 14%, transparent), transparent), var(--bg);
+    min-height: 100vh; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+  main { max-width: 920px; margin: 0 auto; padding: 20px 16px 72px; }
+
+  /* header */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 28px; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+  .logo { width: 36px; height: 36px; flex: none; }
+  .brand b { font: 700 1.2rem/1 var(--serif); letter-spacing: -.01em; }
+  .brand b span { color: var(--muted); font-weight: 500; }
+  .hero { text-align: center; margin: 0 auto 28px; max-width: 640px; }
+  .hero h1 { font: 700 clamp(1.9rem, 5vw, 2.8rem)/1.1 var(--serif); letter-spacing: -.02em; margin: 0 0 10px; }
+  .hero h1 em { font-style: italic; background: linear-gradient(90deg, var(--germanic), var(--greek), var(--latin));
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { color: var(--muted); margin: 0; font-size: 1.05rem; }
+
+  /* cards */
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+  .editor { padding: 14px; }
+  .editor-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 2px 10px; flex-wrap: wrap; }
+  .label { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  textarea { width: 100%; min-height: 150px; padding: 14px; font: 1.05rem/1.6 var(--serif); color: inherit; background: var(--bg);
+    border: 1px solid var(--line); border-radius: 12px; resize: vertical; transition: border-color .15s, box-shadow .15s; }
+  textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+
+  /* buttons */
+  .btn { font: 600 .875rem var(--sans); padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--card);
+    color: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background .15s, transform .05s, border-color .15s; }
+  .btn:hover { background: var(--bg2); border-color: color-mix(in srgb, var(--fg) 25%, var(--line)); }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+  .btn-primary:hover { background: color-mix(in srgb, var(--accent) 88%, var(--fg)); border-color: transparent; }
+  .btn-danger { background: var(--danger); color: #fff; border-color: transparent; }
+  .btn-danger:hover { background: color-mix(in srgb, var(--danger) 88%, #000); border-color: transparent; }
+  .btn-ghost { border-color: transparent; background: none; color: var(--muted); }
+  .btn svg { width: 16px; height: 16px; }
+
+  /* switches */
+  .opts { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; margin: 14px 2px 2px; font-size: .9rem; }
+  .switch { display: inline-flex; gap: 10px; align-items: center; cursor: pointer; user-select: none; }
+  .switch input { position: absolute; opacity: 0; pointer-events: none; }
+  .switch i { width: 34px; height: 20px; border-radius: 999px; background: color-mix(in srgb, var(--muted) 40%, transparent);
+    position: relative; transition: background .2s; flex: none; }
+  .switch i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / .3); transition: transform .2s; }
+  .switch input:checked + i { background: var(--accent); }
+  .switch input:checked + i::after { transform: translateX(14px); }
+  .switch input:focus-visible + i { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #status { color: var(--muted); font-size: .85rem; }
+  #status.busy::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%;
+    border: 2px solid var(--line); border-top-color: var(--accent); animation: spin .7s linear infinite; vertical-align: -1px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* saved */
+  .saved { margin: 18px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+  #current { font-size: .85rem; color: var(--muted); }
+  .items { display: contents; }
+  .item { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; background: var(--card); overflow: hidden;
+    font-size: .85rem; transition: border-color .15s; }
+  .item:hover { border-color: color-mix(in srgb, var(--fg) 30%, var(--line)); }
+  .item button { border: 0; background: none; color: inherit; font: inherit; cursor: pointer; padding: 5px 10px; }
+  .item button:first-child { padding-left: 14px; }
+  .item .del { color: var(--muted); padding: 5px 11px 5px 6px; }
+  .item .del:hover { color: var(--danger); }
+  .item.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--card)); }
+  #empty { font-size: .85rem; color: var(--muted); }
+
+  /* results */
+  .results { margin-top: 28px; padding: 18px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px 5px 10px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--card); color: inherit; font: .85rem var(--sans); transition: all .15s; }
+  .chip:hover { border-color: var(--c); background: color-mix(in srgb, var(--c) 8%, var(--card)); }
   .chip .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
-  .chip[aria-pressed="true"] { outline: 2px solid var(--c); }
-  .chip small { color: var(--muted); }
-  .bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--line); margin-bottom: 20px; }
-  .bar span { background: var(--c); transition: width .25s; }
-  #out { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px; white-space: pre-wrap;
-    font-size: 1.1rem; line-height: 1.9; min-height: 80px; overflow-wrap: anywhere; }
-  .w { border-radius: 4px; padding: 1px 2px; background: color-mix(in srgb, var(--c) 26%, transparent);
-    box-shadow: inset 0 -2px 0 var(--c); }
-  .w.guess { box-shadow: inset 0 -2px 0 transparent; background: color-mix(in srgb, var(--c) 14%, transparent);
+  .chip .nm { font-weight: 600; }
+  .chip small { color: var(--muted); font-size: .78rem; }
+  .chip[aria-pressed="true"] { border-color: var(--c); background: color-mix(in srgb, var(--c) 16%, var(--card));
+    box-shadow: 0 0 0 1px var(--c); }
+  .bar { display: flex; height: 10px; border-radius: 999px; overflow: hidden; background: var(--line); margin-bottom: 18px; gap: 2px; }
+  .bar span { background: var(--c); transition: width .35s cubic-bezier(.2,.8,.2,1); }
+  #out { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 20px; white-space: pre-wrap;
+    font: 1.2rem/2 var(--serif); min-height: 90px; overflow-wrap: anywhere; }
+  .w { border-radius: 4px; padding: 1px 2px; background: color-mix(in srgb, var(--c) 24%, transparent);
+    box-shadow: inset 0 -2px 0 var(--c); transition: opacity .2s, background .2s; cursor: help; }
+  .w:hover { background: color-mix(in srgb, var(--c) 38%, transparent); }
+  .w.guess { box-shadow: inset 0 -2px 0 transparent; background: color-mix(in srgb, var(--c) 13%, transparent);
     outline: 1px dashed color-mix(in srgb, var(--c) 60%, transparent); outline-offset: -1px; }
-  .w.dim { background: none; box-shadow: none; outline: none; opacity: .4; }
+  .w.dim { background: none; box-shadow: none; outline: none; opacity: .35; }
+  .hint { margin: 12px 2px 0; font-size: .8rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 18px; }
+  .hint span::before { content: ""; display: inline-block; width: 18px; height: 8px; margin-right: 6px; border-radius: 2px; vertical-align: 0; }
+  .hint .rec::before { background: color-mix(in srgb, var(--accent) 24%, transparent); box-shadow: inset 0 -2px 0 var(--accent); }
+  .hint .inf::before { background: color-mix(in srgb, var(--accent) 12%, transparent); outline: 1px dashed color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: -1px; }
   .germanic { --c: var(--germanic); } .norse { --c: var(--norse); } .latin { --c: var(--latin); }
   .greek { --c: var(--greek); } .celtic { --c: var(--celtic); } .other { --c: var(--other); } .unknown { --c: var(--unknown); }
-  footer { color: var(--muted); font-size: .85rem; margin-top: 24px; }
+
+  /* modal */
+  .modal-back { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px;
+    background: rgb(10 12 16 / .5); backdrop-filter: blur(4px); animation: fade .15s ease-out; }
+  .modal-back.out { opacity: 0; transition: opacity .14s; }
+  .modal { width: min(440px, 100%); max-height: 90vh; overflow: auto; background: var(--card); border: 1px solid var(--line);
+    border-radius: 18px; padding: 24px; box-shadow: 0 24px 64px rgb(0 0 0 / .35); animation: pop .18s cubic-bezier(.2,.9,.3,1.2); }
+  .modal h2 { margin: 0 0 6px; font: 700 1.25rem/1.25 var(--serif); }
+  .modal p { margin: 0 0 16px; color: var(--muted); }
+  .modal.danger h2::before { content: "!"; display: inline-grid; place-items: center; width: 24px; height: 24px; margin-right: 10px;
+    border-radius: 50%; background: var(--danger); color: #fff; font: 700 .9rem var(--sans); vertical-align: 2px; }
+  .modal-body { font-size: .92rem; color: var(--muted); margin-bottom: 16px; }
+  .modal-body p { margin: 0 0 10px; } .modal-body i { color: var(--fg); }
+  .field { display: block; font-size: .8rem; font-weight: 600; color: var(--muted); margin-bottom: 18px; }
+  .field input { display: block; width: 100%; margin-top: 6px; padding: 10px 12px; font: 1rem var(--sans); color: var(--fg);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
+  .field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+  @keyframes fade { from { opacity: 0; } }
+  @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.96); } }
+
+  /* toasts */
+  #toasts { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 60; display: grid; gap: 8px;
+    justify-items: center; pointer-events: none; width: max-content; max-width: calc(100vw - 32px); }
+  .toast { background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: .9rem; font-weight: 500;
+    box-shadow: 0 8px 24px rgb(0 0 0 / .3); animation: pop .2s ease-out; }
+  .toast.success { border-left: 4px solid var(--celtic); }
+  .toast.error { border-left: 4px solid var(--danger); }
+  .toast.out { opacity: 0; transition: opacity .2s; }
+
+  @media (max-width: 560px) {
+    .opts { flex-direction: column; align-items: flex-start; }
+    #out { font-size: 1.1rem; padding: 14px; }
+    .results { padding: 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
 <main>
-  <h1>Word Roots Highlighter</h1>
-  <p class="sub">Paste English text and see which words come from Germanic, Latin, Norse, Greek and other roots.</p>
+  <header class="top">
+    <a class="brand" href="./" aria-label="WordsByOrigin.com home">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--accent)"/>
+        <path d="M7 10l4 12 5-9 5 9 4-12" fill="none" stroke="var(--accent-fg)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <b>WordsByOrigin<span>.com</span></b>
+    </a>
+    <button class="btn btn-ghost" id="about" type="button">How it works</button>
+  </header>
 
-  <textarea id="in" aria-label="Text to analyze" spellcheck="false"></textarea>
-  <div class="row">
-    <label><input type="checkbox" id="online"> Look up unknown words on Wiktionary</label>
-    <label><input type="checkbox" id="unique"> Count unique words only</label>
-    <label><input type="checkbox" id="merge"> Treat Norse as Germanic</label>
-    <button id="sample">Load sample</button>
-    <span id="status"></span>
-  </div>
+  <section class="hero">
+    <h1>See where your <em>words</em> come from</h1>
+    <p class="sub">Paste any English text and watch it light up by root: Germanic, Latin, Norse, Greek and more.</p>
+  </section>
 
-  <div class="saved">
-    <button id="save">Save as…</button>
-    <span id="current"></span>
-    <div class="items" id="items"></div>
-  </div>
+  <section class="card editor">
+    <div class="editor-head">
+      <span class="label">Your text</span>
+      <span>
+        <button class="btn btn-ghost" id="sample" type="button">Load sample</button>
+        <button class="btn btn-ghost" id="clear" type="button">Clear</button>
+      </span>
+    </div>
+    <textarea id="in" aria-label="Text to analyze" spellcheck="false" placeholder="Paste or type something here…"></textarea>
+    <div class="opts">
+      <label class="switch"><input type="checkbox" id="online"><i></i>Look up unknown words on Wiktionary</label>
+      <label class="switch"><input type="checkbox" id="unique"><i></i>Count unique words only</label>
+      <label class="switch"><input type="checkbox" id="merge"><i></i>Treat Norse as Germanic</label>
+      <span id="status" role="status"></span>
+    </div>
+    <div class="saved">
+      <button class="btn btn-primary" id="save" type="button">Save as…</button>
+      <span id="current" hidden></span>
+      <span id="empty">Saved texts will appear here.</span>
+      <div class="items" id="items"></div>
+    </div>
+  </section>
 
-  <div class="legend" id="legend"></div>
-  <div class="bar" id="bar"></div>
-  <div id="out" aria-live="polite"></div>
-
-  <footer>
-    Solid underline = recorded origin. Dashed outline = an inference or an unresolved origin.
-    Words follow their historical roots through intermediary languages: <i>philosophy</i> counts as Greek,
-    <i>street</i> as Latin, and Scots belongs to Germanic. Mixed formations and words with different origins for
-    different meanings appear as Unresolved; hover for details.
-    Lexical data: <a href="https://kaikki.org/dictionary/English/index.html">Wiktionary contributors via Kaikki</a>,
-    <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
-    Click a legend chip to spotlight one origin.
-  </footer>
+  <section class="card results">
+    <div class="legend" id="legend"></div>
+    <div class="bar" id="bar"></div>
+    <div id="out" aria-live="polite"></div>
+    <div class="hint"><span class="rec">Recorded origin</span><span class="inf">Inference or unresolved</span><span>Hover a word for details · click a chip to spotlight an origin</span></div>
+  </section>
 </main>
+
+<div id="toasts" aria-live="polite"></div>
+
+<template id="about-tpl">
+  <p>Solid underline = recorded origin. Dashed outline = an inference or an unresolved origin.</p>
+  <p>Words follow their historical roots through intermediary languages: <i>philosophy</i> counts as Greek,
+    <i>street</i> as Latin, and Scots belongs to Germanic. Mixed formations and words with different origins for
+    different meanings appear as Unresolved; hover for details.</p>
+  <p>Click a legend chip to spotlight one origin.</p>
+  <p>Lexical data: <a href="https://kaikki.org/dictionary/English/index.html" target="_blank" rel="noopener">Wiktionary contributors via Kaikki</a>,
+    <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>.</p>
+</template>
 
 <script src="lexicon.js"></script>
 <script src="classify.js"></script>
@@ -160,7 +293,7 @@ function renderStats() {
     chip.className = `chip ${cat}`;
     chip.setAttribute("aria-pressed", state.solo.has(cat));
     const pct = total ? Math.round((counts[cat] / total) * 100) : 0;
-    chip.innerHTML = `<span class="dot"></span>${info.short} <small>${counts[cat]} · ${pct}%</small>`;
+    chip.innerHTML = `<span class="dot"></span><span class="nm">${info.short}</span><small>${counts[cat]} · ${pct}%</small>`;
     chip.onclick = () => { state.solo.has(cat) ? state.solo.delete(cat) : state.solo.add(cat); state.tokens.forEach(paint); renderStats(); };
     return chip;
   }));
@@ -212,7 +345,7 @@ async function lookupUnknowns() {
   const run = ++state.lookupRun;
   const todo = [...new Set(state.tokens.filter((t) => t.res.guess && t.res.src !== "lexicon" && !t.res.origins).map((t) => t.key))]
     .filter((k) => !(k in wikt)).slice(0, MAX_LOOKUPS);
-  if (!todo.length) { els.status.textContent = ""; return; }
+  if (!todo.length) { els.status.textContent = ""; els.status.classList.remove("busy"); return; }
   let done = 0;
   const worker = async () => {
     while (todo.length && run === state.lookupRun) {
@@ -222,6 +355,7 @@ async function lookupUnknowns() {
         wikt[key] = (await wiktCategory(base)) || "?";
       } catch { /* network error: leave uncached, retry next time */ }
       els.status.textContent = `Looking up words… ${++done}`;
+      els.status.classList.add("busy");
       for (const t of state.tokens) if (t.key === key && wikt[key] && wikt[key] !== "?") {
         t.res = { cat: wikt[key], src: "wiktionary", guess: false, note: "" };
         paint(t);
@@ -232,7 +366,78 @@ async function lookupUnknowns() {
   if (run !== state.lookupRun) return;
   saveCache();
   renderStats();
+  els.status.classList.remove("busy");
   els.status.textContent = "Lookup done.";
+}
+
+
+// ---------- Custom dialogs & toasts ----------
+function openModal({ title, message, html, input, okText = "OK", cancelText, danger }) {
+  return new Promise((resolve) => {
+    const prev = document.activeElement;
+    const back = document.createElement("div");
+    back.className = "modal-back";
+    const box = document.createElement("div");
+    box.className = "modal" + (danger ? " danger" : "");
+    box.setAttribute("role", input ? "dialog" : "alertdialog");
+    box.setAttribute("aria-modal", "true");
+    box.setAttribute("aria-labelledby", "m-title");
+    const h = document.createElement("h2"); h.id = "m-title"; h.textContent = title;
+    box.append(h);
+    if (message) { const p = document.createElement("p"); p.textContent = message; box.append(p); }
+    if (html) { const d = document.createElement("div"); d.className = "modal-body"; d.innerHTML = html; box.append(d); }
+    let field;
+    if (input) {
+      const lab = document.createElement("label"); lab.className = "field";
+      lab.textContent = input.label;
+      field = document.createElement("input");
+      field.type = "text"; field.value = input.value || ""; field.placeholder = input.placeholder || "";
+      field.maxLength = 80; field.autocomplete = "off";
+      lab.append(field); box.append(lab);
+    }
+    const actions = document.createElement("div"); actions.className = "modal-actions";
+    const ok = document.createElement("button"); ok.className = "btn " + (danger ? "btn-danger" : "btn-primary"); ok.textContent = okText;
+    if (cancelText) {
+      const no = document.createElement("button"); no.className = "btn"; no.textContent = cancelText;
+      no.onclick = () => close(input ? null : false);
+      actions.append(no);
+    }
+    actions.append(ok); box.append(actions); back.append(box);
+    const close = (val) => {
+      document.removeEventListener("keydown", onKey, true);
+      back.classList.add("out");
+      setTimeout(() => { back.remove(); prev && prev.focus && prev.focus(); }, 140);
+      resolve(val);
+    };
+    const done = () => close(input ? field.value : true);
+    ok.onclick = done;
+    const onKey = (e) => {
+      if (e.key === "Escape") { e.preventDefault(); close(input ? null : (cancelText ? false : true)); }
+      else if (e.key === "Enter" && field && document.activeElement === field) { e.preventDefault(); done(); }
+      else if (e.key === "Tab") {
+        const f = [...box.querySelectorAll("button, input, a[href]")];
+        const i = f.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); f.at(-1).focus(); }
+        else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+      }
+    };
+    document.addEventListener("keydown", onKey, true);
+    back.addEventListener("mousedown", (e) => { if (e.target === back) close(input ? null : (cancelText ? false : true)); });
+    document.body.append(back);
+    (field || (danger && actions.firstChild) || ok).focus();
+    field && field.select();
+  });
+}
+const uiConfirm = (o) => openModal({ cancelText: "Cancel", ...o });
+const uiPrompt = (o) => openModal({ cancelText: "Cancel", input: { label: o.label, value: o.value, placeholder: o.placeholder }, ...o });
+const uiAlert = (o) => openModal(o);
+
+function toast(msg, kind = "info") {
+  const host = $("toasts");
+  const t = document.createElement("div");
+  t.className = "toast " + kind; t.setAttribute("role", "status"); t.textContent = msg;
+  host.append(t);
+  setTimeout(() => { t.classList.add("out"); setTimeout(() => t.remove(), 200); }, 2800);
 }
 
 // ---------- Saved texts ----------
@@ -240,7 +445,7 @@ const SAVED_KEY = "glh-saved-texts-v1";
 const PARAM = "text";
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem(SAVED_KEY) || "{}"); } catch {}
-const persist = () => { try { localStorage.setItem(SAVED_KEY, JSON.stringify(saved)); } catch { alert("Could not save: browser storage is unavailable."); } };
+const persist = () => { try { localStorage.setItem(SAVED_KEY, JSON.stringify(saved)); } catch { toast("Could not save: browser storage is unavailable.", "error"); } };
 let currentName = null;
 
 function setUrl(name, push) {
@@ -251,6 +456,8 @@ function setUrl(name, push) {
 
 function renderSaved() {
   els.current.textContent = currentName ? `Editing: ${currentName}` : "";
+  els.current.hidden = !currentName;
+  $("empty").hidden = Object.keys(saved).length > 0;
   els.items.replaceChildren(...Object.keys(saved).sort((a, b) => a.localeCompare(b)).map((name) => {
     const box = document.createElement("span");
     box.className = "item" + (name === currentName ? " active" : "");
@@ -262,12 +469,14 @@ function renderSaved() {
     del.textContent = "×";
     del.title = `Delete "${name}"`;
     del.setAttribute("aria-label", `Delete ${name}`);
-    del.onclick = () => {
-      if (!confirm(`Delete "${name}"?`)) return;
+    del.onclick = async () => {
+      if (!(await uiConfirm({ title: "Delete saved text?", message: `"${name}" will be permanently removed from this browser.`,
+        okText: "Delete", danger: true }))) return;
       delete saved[name];
       persist();
       if (name === currentName) { currentName = null; setUrl(null, false); }
       renderSaved();
+      toast(`Deleted "${name}"`);
     };
     box.append(open, del);
     return box;
@@ -284,16 +493,20 @@ function openSaved(name, push) {
   return true;
 }
 
-els.save.onclick = () => {
-  const name = (prompt("Name for this text:", currentName || "") || "").trim();
+els.save.onclick = async () => {
+  const name = ((await uiPrompt({ title: "Save this text", message: "Give it a name so you can come back to it later.",
+    label: "Name", value: currentName || "", okText: "Save", placeholder: "e.g. Amazing Grace" })) || "").trim();
   if (!name) return;
-  if (Object.hasOwn(saved, name) && name !== currentName && !confirm(`"${name}" already exists. Overwrite?`)) return;
+  if (Object.hasOwn(saved, name) && name !== currentName && !(await uiConfirm({ title: "Overwrite existing text?",
+    message: `"${name}" already exists. Saving will replace its contents.`, okText: "Overwrite", danger: true }))) return;
   saved[name] = els.in.value;
   persist();
   currentName = name;
   setUrl(name, name !== new URLSearchParams(location.search).get(PARAM));
   renderSaved();
+  toast(`Saved "${name}"`, "success");
 };
+$("about").onclick = () => uiAlert({ title: "About WordsByOrigin", html: $("about-tpl").innerHTML, okText: "Got it" });
 
 window.addEventListener("popstate", () => {
   const name = new URLSearchParams(location.search).get(PARAM);
@@ -306,6 +519,7 @@ els.online.addEventListener("change", analyze);
 els.unique.addEventListener("change", renderStats);
 els.merge.addEventListener("change", () => { state.solo.delete("norse"); state.tokens.forEach(paint); renderStats(); });
 $("sample").onclick = () => { els.in.value = SAMPLE; analyze(); };
+$("clear").onclick = () => { els.in.value = ""; analyze(); els.in.focus(); };
 if (!openSaved(new URLSearchParams(location.search).get(PARAM), false)) {
   els.in.value = SAMPLE;
   analyze();
